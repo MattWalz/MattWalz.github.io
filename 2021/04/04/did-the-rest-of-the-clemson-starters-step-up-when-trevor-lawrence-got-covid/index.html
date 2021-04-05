@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.81.0" />
+
+
+<title>Did the rest of the Clemson starters step up when Trevor Lawrence got COVID - Matt Walz&#39;s Github site</title>
+<meta property="og:title" content="Did the rest of the Clemson starters step up when Trevor Lawrence got COVID - Matt Walz&#39;s Github site">
+
+
+  <link href='http://mattwalz.github.io/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/rstudio/WalzMatt">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/WalzMatt">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">8 min read</span>
+    
+
+    <h1 class="article-title">Did the rest of the Clemson starters step up when Trevor Lawrence got COVID</h1>
+
+    
+    <span class="article-date">2021-04-04</span>
+    
+
+    <div class="article-content">
+      
+<script src="http://mattwalz.github.io/2021/04/04/did-the-rest-of-the-clemson-starters-step-up-when-trevor-lawrence-got-covid/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>For my project I wanted to find out how the rest of the Clemson University football team played when their Heisman Finalist quarterback Trevor Lawrence had to sit due to COVID-19.</p>
+<p>I began by downloading the two libraries I needed.</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.2     ✓ purrr   0.3.4
+## ✓ tibble  3.0.3     ✓ dplyr   1.0.2
+## ✓ tidyr   1.1.1     ✓ stringr 1.4.0
+## ✓ readr   1.3.1     ✓ forcats 0.5.0</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(ggalt)</code></pre>
+<pre><code>## Registered S3 methods overwritten by &#39;ggalt&#39;:
+##   method                  from   
+##   grid.draw.absoluteGrob  ggplot2
+##   grobHeight.absoluteGrob ggplot2
+##   grobWidth.absoluteGrob  ggplot2
+##   grobX.absoluteGrob      ggplot2
+##   grobY.absoluteGrob      ggplot2</code></pre>
+<p>I loaded my data which was the statistics from every division one FBS football game this past season.</p>
+<pre class="r"><code>cfb20 &lt;- read_csv(&quot;~/Documents/blog/content/footballlogs20.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_double(),
+##   Date = col_date(format = &quot;&quot;),
+##   HomeAway = col_character(),
+##   Opponent = col_character(),
+##   Result = col_character(),
+##   TeamFull = col_character(),
+##   TeamURL = col_character(),
+##   Outcome = col_character(),
+##   Team = col_character(),
+##   Conference = col_character()
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<p>I started by filtering out Clemson’s games.</p>
+<pre class="r"><code>clemson &lt;- cfb20 %&gt;% filter(TeamFull == &quot;Clemson Tigers&quot;)</code></pre>
+<p>I only wanted to look at their regular season games, so I filtered by date stating the game had to have been played before or on December 5th, 2020.</p>
+<pre class="r"><code>clemregseason &lt;- clemson %&gt;% filter(Date &lt;= &quot;2020-12-05&quot;)</code></pre>
+<p>I also wanted to have a data set of the games where Trevor Lawrence’s backup D.J. Uiagalelei started so I filtered by the date of the two games that he started which were against Boston College and Notre Dame.</p>
+<pre class="r"><code>DJStarts &lt;- clemson %&gt;% filter(Date &gt;= as.Date(&quot;2020-10-31&quot;) &amp; Date &lt;= as.Date(&quot;2020-11-07&quot;))</code></pre>
+<p>The first thing I was interested in finding out was if the run game improved their efficiency in Lawrence’s absence. Did the offensive line and running back Travis Etienne improve their efforts when their starting quarterback was out?</p>
+<p>To do this I made a bar graph using the data from Clemson’s regular season. For my x axis I used the opponent they played and reordered the graph by the date they played each opponent. The weight of my bars took the rushing average or yards per carry that the team had for each game. I then filled the bars with Clemson’s regalia or purple color. I then added an additional bar graph to this plot using the data from my data set that looked at the games where Lawrence’s backup D.J. Uiagalelei started. I used the same things for the x axis and weight, but change the fill of those two games to Clemson’s orange color. I then labeled my x and y axis, gave the graph a title and subtitle, along with adding a caption the provided the source and who made the graphic. I used the minimal theme and some extra elements to decide the size of my text.</p>
+<pre class="r"><code>ggplot() + geom_bar(data=clemregseason, aes(x=reorder(Opponent, Date), weight=RushingAvg), fill = &quot;#522D80&quot;) +
+  geom_bar(data=DJStarts, aes(x=reorder(Opponent, Date), weight=RushingAvg), fill = &quot;#F56600&quot;) +
+  labs(x=&quot;Opponent&quot;, y=&quot;Yards Per Carry&quot;, title=&quot;Did the Rushing Attack Improve?&quot;, subtitle=&quot;The rushing game did not become more efficient in Lawrence&#39;s absence.&quot;, caption=&quot;Source: NCAA | By Matt Walz&quot;) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 16, face = &quot;bold&quot;),
+    axis.title = element_text(size = 7),
+    axis.text = element_text(size = 7.7),
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )</code></pre>
+<p><img src="http://mattwalz.github.io/2021/04/04/did-the-rest-of-the-clemson-starters-step-up-when-trevor-lawrence-got-covid/index_files/figure-html/unnamed-chunk-6-1.png" width="672" />
+Clemson’s rushing game got noticeably worse without Lawrence on the field.</p>
+<p>The next thing I wanted to see was if the entire teams discipline raised in the weeks without Lawrence.</p>
+<p>To see this I made a lollipop graph that looked at the opponent they were playing and how many penalties they committed against that team. To make the graph I took the data from Clemson’s regular season. I then put the opponent on the y axis this time but still used date to reorder it. I then made penalties my x axis. I then put horizontal equals true to let it be known that this graph is a horizontal one. Finally I made the lollipops the same regalia color as before. I again added another graph of the same type using the data from D.J. Uiagalelei’s starts. I used the same x and y axis as before as well as telling it again that it would be a horizontal graph. I again switched the color to Clemson’s orange to better highlight the games Lawrence missed. Once again I added labels to my x and y axis along with a title, subtitle, and caption. I used theme minimal again as well and changed my text sizes too.</p>
+<pre class="r"><code>ggplot() + 
+  geom_lollipop(
+    data=clemregseason, 
+    aes(y=reorder(Opponent, Date), x=Penalties), 
+    horizontal = TRUE,
+    color = &quot;#522D80&quot;
+    ) +
+  geom_lollipop(
+    data=DJStarts, 
+    aes(y=reorder(Opponent, Date), x=Penalties), 
+    horizontal = TRUE,
+    color = &quot;#F56600&quot;
+    ) + labs(x=&quot;Number of Penalties&quot;, y=&quot;Opponent&quot;, title=&quot;Did they have more Penalties?&quot;, subtitle=&quot;Were they more focused due to Lawrences absence? Not against Boston College.&quot;, caption=&quot;Source: NCAA | By Matt Walz&quot;) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 16, face = &quot;bold&quot;),
+    axis.title = element_text(size = 7), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )</code></pre>
+<p><img src="http://mattwalz.github.io/2021/04/04/did-the-rest-of-the-clemson-starters-step-up-when-trevor-lawrence-got-covid/index_files/figure-html/unnamed-chunk-7-1.png" width="672" />
+I the first game that Lawrence missed Clemson as a team had their worst performance from a penalty standpoint that they did all season. They bounced back penalty wise in their next game without him though.</p>
+<p>Finally I wanted to set up a stacked bar graph to see how the defense did both the rush and the pass.</p>
+<p>To do this I first had to make a new data set for defensive yards. To find the data set I used the statistics from Clemson’s regular season and then grouped them by opponent and date. I then summarized the two categories I wanted to see which were defensive rush yards allowed and defensive pass yards allowed.</p>
+<pre class="r"><code>defyards &lt;- clemregseason %&gt;%
+  group_by(Opponent, Date) %&gt;% 
+  summarise(
+    DefensiveRushYards = DefRushingYds,
+    DefensivePassYards = DefPassingYds,
+  ) </code></pre>
+<pre><code>## `summarise()` regrouping output by &#39;Opponent&#39; (override with `.groups` argument)</code></pre>
+<p>To make a stacked bar graph you must have long data so I took the defensive yards data set I had just created and pivoted it to make it long data. For my columns I stated that it starts with defensive, made the names to type, and made the values to yards. I then saved this as a new data set called defensive yards long.</p>
+<pre class="r"><code>defyards %&gt;% 
+  pivot_longer(
+    cols=starts_with(&quot;Defensive&quot;), 
+    names_to=&quot;Type&quot;, 
+    values_to=&quot;Yards&quot;) -&gt; defyardslong</code></pre>
+<p>Lastly to create the stacked bar graph I entered into ggplot the data I wanted to use which was the defensive yards long data I had just created, I then made opponent my x axis and reordered it by the date when the game was played. I then used yards as my weight and type for my fill. I then added that I wanted this to be a bar graph and changed the colors of the fill to the two Clemson team colors from before. I then labeled my x axis and y axis along with adding a title, subtitle, and caption. I once again used the minimal theme and sized all of my text. Finally, I flipped the coordinates to make the graph more readable.</p>
+<pre class="r"><code>ggplot(defyardslong, aes(x=reorder(Opponent, Date), weight=Yards, fill=Type)) + 
+  geom_bar() + 
+  scale_fill_manual(values = c(&quot;#F56600&quot;, &quot;#522D80&quot;)) +
+  labs(x=&quot;Opponent&quot;, y=&quot;Total Defensive Yards Allowed&quot;, title=&quot;Did the Defense Step Up?&quot;, subtitle=&quot;Against BC yes, but when they went up against Notre Dame the defense collapsed.&quot;, caption=&quot;Source: NCAA | By Matt Walz&quot;) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 16, face = &quot;bold&quot;),
+    axis.title = element_text(size = 7), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    ) +
+  coord_flip()</code></pre>
+<p><img src="http://mattwalz.github.io/2021/04/04/did-the-rest-of-the-clemson-starters-step-up-when-trevor-lawrence-got-covid/index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>This graph shows that while the defense did do their part in Lawrences first game out, they completely let down in the second game he was absent.</p>
+<p>Overall, after looking at the three charts I would find it hard to say that the team stepped up in Lawrences absence. The rushing attack had their two worst performances of the regular season when he was out. This could have been because their opponents were keying on the run game since they were not as afraid of the man under center. To be noticeably worse as they were though in those two games is not a great look from an effort standpoint. They also had their most penalties in a single game in the first game Lawrence was out for, you would think that they would be more focused without their leader but maybe that shows how much his leadership was missed. The defense also had their worst performance of the year in Lawrence’s second game out, yes they were up against the best team on their schedule which contributed to some of their poor showing but they let up a hundred yards more than any of their other games. These letdowns in three major categories have led me to believe that the rest of the Clemson starters did not step up when their star player went out.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+
