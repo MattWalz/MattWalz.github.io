@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.81.0" />
+
+
+<title>Is Kirk Cousins an Elite Passer? - Matt Walz&#39;s Github site</title>
+<meta property="og:title" content="Is Kirk Cousins an Elite Passer? - Matt Walz&#39;s Github site">
+
+
+  <link href='http://mattwalz.github.io/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/rstudio/WalzMatt">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/WalzMatt">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">12 min read</span>
+    
+
+    <h1 class="article-title">Is Kirk Cousins an Elite Passer?</h1>
+
+    
+    <span class="article-date">2021-04-25</span>
+    
+
+    <div class="article-content">
+      
+<script src="http://mattwalz.github.io/2021/04/25/is-kirk-cousins-an-elite-passer/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>As a lifelong Minnesota sports fan, I have become less optimistic about the product that is put in front of me from all of my hometown professional sports teams each year. Even when the team looks competitive all season, I know that when the playoffs roll around they’ll end up blowing it. I wanted to see if I could inspire some hope back into myself and other Minnesota sports fans, specifically Vikings fans for this scenario. I wanted to find out using data if Kirk Cousins has been one of the elite passer in the NFL since he joined the Minnesota Vikings. Everybody criticizes him because he plays the most important position on the team and they haven’t quite gotten over the hump just yet, but I’m here to show that Cousins does a lot for the Vikings, even with a below average offensive line in front of him year after year.</p>
+<p>I start by adding my libraries.</p>
+<pre class="r"><code>library(tidyverse)
+library(ggalt)
+library(ggrepel)</code></pre>
+<p>The next thing I did was load the data set I had created which was all of the passing statistics from the years 2018 to 2020, the years Kirk Cousins has been the Vikings quarterback.</p>
+<pre class="r"><code>passing1820 &lt;- read_csv(&quot;~/Documents/passinglogs1820.csv&quot;)</code></pre>
+<p>For the first graphic I wanted to make a dumbbell chart, I had to do to clean up my data set. I needed to get rid of the asterisks that were next to the players’ names who had made the pro bowl for that season. I did this by mutating the names using the double backslash in gsub to find the asterisks and replace them with nothing in the player column. I then used this same type of mutation swapping out the asterisks for plus signs that were in players’ names who had won the MVP for that season.</p>
+<pre class="r"><code>passing1820 &lt;- passing1820 %&gt;% 
+  mutate(Player=gsub(&quot;\\*&quot;,&quot;&quot;,Player)) %&gt;%
+  mutate(Player=gsub(&quot;\\+&quot;,&quot;&quot;,Player))</code></pre>
+<p>Then, when I went to group by player for a new data set I noticed that some players had a single season that wouldn’t group with the other two. So, I mutated the data using the string trim function on the player column to get rid of any white space from the beginning or end of the players’ name.</p>
+<pre class="r"><code>passing1820 &lt;- passing1820 %&gt;% 
+  mutate(Player = str_trim(Player))</code></pre>
+<p>Once I got rid of the extra characters in some of the players’ names and trimmed out all of the white space I was able to create my first new data frame that I wanted to look at. This was a data frame for what I considered to be the elite passers over the past three NFL seasons. To get this data frame I first grouped by player so each players three year stats would combine together. Next, I summarized to find the sum of each players’ touchdowns, interceptions, passing yards, fourth quarter comebacks, and game winning drives, while also finding their average completion percentage over that same time span. Finally, to see who the truly elite passers were over the past three seasons I filtered to see the players who had more than 66 touchdown passes and 9000 passing yards over that time frame. I decided that to be considered elite you would have to average at least 22 touchdown passes and 3000 pass yards per year. I know these numbers don’t seem like they would be considered elite but I chose to make them slightly lower than what I would consider elite to account for possible injuries. I then arranged the data set in descending order by touchdowns thrown to make it easier to read.</p>
+<pre class="r"><code>elitethrowers &lt;- passing1820 %&gt;% 
+  group_by(Player) %&gt;% 
+  summarise(
+    Tds = sum(TD),
+    Ints = sum(Int),
+    PassYds = sum(Yds),
+    CompletionPct = mean(CmpPct),
+    Comebacks = sum(FourthQComeback),
+    GameWinningDrives = sum(GWD)
+  ) %&gt;%
+  filter(Tds &gt; 66, PassYds &gt; 9000) %&gt;%
+  arrange(desc(Tds))</code></pre>
+<p>I then wanted to be able to highlight Cousins stats so I made a data frame with just him in it by filtering him out from the elite throwers data set I had just created.</p>
+<pre class="r"><code>Cousins &lt;- elitethrowers %&gt;% 
+  filter(Player == &quot;Kirk Cousins&quot;)</code></pre>
+<p>For my first graphic I wanted to look at the elite throwers over the past three years and see where they stacked up in the categories of touchdowns and interceptions thrown. To do this I made a dumbbell chart. I started by designating ggplot to create a geom_dumbbell. To make the dumbbell I first took the data from the elite throwers data set I had created, then for my aesthetics I made the y axis players and reordered that axis by touchdowns in descending order. For my x axis, I made it touchdowns and made my xend interceptions. I then decided to size the points at each end of the dumbbell at 1.5, colored the line connecting them grey and made the x (touchdowns) green, while making the xend (interceptions) red. To make Cousins line on the graph stand out more I used geom_dumbbell once again to make a change to the color of his connecting line. To do this the only thing I changed from the prior chart was to use the data from the Cousins data set I had just created and to change the color for the line from grey to black. I then used the labs function to label my x and y axis, give the chart a title and subtitle and add a caption that included my source and who made the chart. I used the minimal theme to make the dumbbells stand out more and finally changed the text size of my title, subtitle, and axis titles, while making the main title bold.</p>
+<pre class="r"><code>ggplot() + 
+  geom_dumbbell(
+    data=elitethrowers, 
+    aes(y=reorder(Player, Tds), x=Tds, xend=Ints),
+    size = 1.5,
+    color = &quot;grey&quot;,
+    colour_x = &quot;green&quot;,
+    colour_xend = &quot;red&quot;) + 
+  geom_dumbbell(
+    data=Cousins, 
+    aes(y=reorder(Player, Tds), x=Tds, xend=Ints),
+    size = 1,
+    color = &quot;black&quot;,
+    colour_x = &quot;green&quot;,
+    colour_xend = &quot;red&quot;) + 
+  labs(x=&quot;Interceptions(Red) vs Touchdowns(Green)&quot;, y=&quot;Player&quot;, title=&quot;Cousins Top 5 in Touchdowns Thrown over past Three Seasons&quot;, subtitle=&quot;He is middle of the pack in terms of interceptions thrown amongst the elite NFL Quarterbacks.&quot;, caption=&quot;Source: Pro-Football-Reference | By Matt Walz&quot;) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.9, face = &quot;bold&quot;),
+    axis.title = element_text(size = 7), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )</code></pre>
+<p><img src="http://mattwalz.github.io/2021/04/25/is-kirk-cousins-an-elite-passer/index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Cousins is fifth overall in touchdown passes since he joined the Vikings in 2018, the players he trails over that span are Pat Mahomes, Russell Wilson, Aaron Rodgers, and Tom Brady. Many people would more than likely consider them to be the top 4 quarterbacks in the league, so for Cousins to be statistically near those guys is a very good look for him. He ranks 8th out of 14 for interceptions but is averaging under 10 per year, which I would consider very impressive considering who is blocking for him when he goes to throw. He is certainly helping to put more points on the board than a majority of quarterbacks in the league.</p>
+<p>For my second graphic I was looking to make a scatter plot so I needed a few more data points than were in the elite throwers data set that I had created earlier. So, I made another data set that found all of the quarterbacks in the league who actually spent some time under center, not the wide receivers or running backs that had thrown a pass or two on a trick play. To do this I named the new data set I wanted real throwers and started by taking the data from the original passing stats data set I loaded at the beginning. I again grouped by player, this time only summarizing by the two columns I wanted to look at which was the sum of each players passing yards and their average completion percentage over the past three years. I then filtered to find players who had over 300 passing yards so I could get rid of all the non-quarterback trick play passers. Finally, I arranged them in descending order by passing yards to make it easier to read.</p>
+<pre class="r"><code>realthrowers &lt;- passing1820 %&gt;%
+  group_by(Player) %&gt;%
+  summarise(
+    PassYds = sum(Yds),
+    CompletionPct = mean(CmpPct)) %&gt;%
+  filter(PassYds &gt; 300) %&gt;%
+  arrange(desc(PassYds))</code></pre>
+<p>Next, I knew for the scatter plot I wanted to make that I would want to show the intersecting lines of the averages for both the passing yards and completion percentages. To do this I created another data set that I called averages real. To make this data set I took the data set real throwers that I had just created and un-grouped it. I then summarized to find the average passing yards and average completion percentage of the group of players.</p>
+<pre class="r"><code>averagesreal &lt;- realthrowers %&gt;% 
+  ungroup() %&gt;% 
+  summarise(
+    Avgpassyds = mean(PassYds),
+    Avgcmppct = mean(CompletionPct)
+  )</code></pre>
+<p>Then, I wanted to know what the average numbers for both categories were, so I used the head function to see them.</p>
+<pre class="r"><code>head(averagesreal)</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   Avgpassyds Avgcmppct
+##        &lt;dbl&gt;     &lt;dbl&gt;
+## 1      5062.      62.3</code></pre>
+<p>I then created some separate data sets for Drew Brees and Patrick Mahomes. I chose these two players because Brees had the highest completion percentage over the past three years combined and Mahomes is arguably the most recognizable player in the sport at the moment. To get their separate data sets I simply filtered them out from the real throwers data set.</p>
+<pre class="r"><code>Brees &lt;- realthrowers %&gt;% filter(Player == &quot;Drew Brees&quot;)
+Mahomes &lt;- realthrowers %&gt;% filter(Player == &quot;Patrick Mahomes&quot;)</code></pre>
+<p>To make the scatter plot I started off by using the geom_point function, taking my data from the real throwers data set and making my x axis passing yards and my y axis completion percentage. I then added in the horizontal and vertical lines that were the averages of the entire group that I had just found, the horizontal being the average completion percentage and the vertical being the average passing yards for the real throwers over the past three seasons, I made both of these lines dark grey. I then added text in the upper right quadrant and the lower left quadrant to indicate the high percentage, high yardage and low percentage, low yardage areas respectively. I colored the high percentage, high yardage area dark green and made the low percentage, low yardage area red. I then added in points for Kirk Cousins, Pat Mahomes, and Drew Brees, using the same x and y axis, making them Vikings purple, red, and gold respectively, while also labeling their points with their appropriate names. I then labeled my x and y axis, added a title and subtitle, as well as a caption to show the source and who made the graphic. I again used the minimal theme and also sized my title, subtitle, and axis.</p>
+<pre class="r"><code>ggplot() + 
+  geom_point(data=realthrowers, aes(x=PassYds, y=CompletionPct)) +
+  geom_hline(yintercept=62.27, color=&quot;dark grey&quot;) + 
+  geom_vline(xintercept=5060, color=&quot;dark grey&quot;) + 
+  geom_text(aes(x=8290, y=70, label=&quot;High Percentage, High Yardage&quot;), color=&quot;dark green&quot;) +
+  geom_text(aes(x=2000, y=42, label=&quot;Low Percentage, Low Yardage&quot;), color=&quot;red&quot;) +
+  geom_point(data=Cousins, aes(x=PassYds, y=CompletionPct), color=&quot;#4F2683&quot;) + 
+  geom_point(data=Mahomes, aes(x=PassYds, y=CompletionPct), color=&quot;Red&quot;) +
+  geom_point(data=Brees, aes(x=PassYds, y=CompletionPct), color=&quot;Gold&quot;) +
+  geom_text_repel(data=Cousins, aes(x=PassYds, y=CompletionPct, label=&quot;Kirk Cousins&quot;)) +
+  geom_text_repel(data=Brees, aes(x=PassYds, y=CompletionPct, label=&quot;Drew Brees&quot;)) +
+  geom_text_repel(data=Mahomes, aes(x=PassYds, y=CompletionPct, label=&quot;Pat Mahomes&quot;)) +
+  labs(x=&quot;Pass Yards&quot;, y=&quot;Completion Percentage&quot;, title=&quot;Cousins Surrounded by the Best&quot;, subtitle=&quot;He is in the upper echelon of passers in both accuracy and yardage.&quot;, caption=&quot;Source: Pro-Football-Reference | By Matt Walz&quot;) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 12.9, face = &quot;bold&quot;),
+    axis.title = element_text(size = 7), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )</code></pre>
+<p><img src="http://mattwalz.github.io/2021/04/25/is-kirk-cousins-an-elite-passer/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>This graphic again shows that Cousins is helping the offense. He is above average in both accuracy and yardage. He is able to move the ball down the field while not having a large drop off in accuracy which works in any offense. When you look directly at his passing stats it would indicate that this man is earning the insane amount of money the Vikings are paying him.</p>
+<p>For my last graphic I wanted to make a bar graph that looked at the elite throwers abilities at the end of games to get their teams a win. To do this I made a new data set named closers that took the elite throwers data set and filtered out the players who didn’t have a single game winning drive in the past three years according to pro football reference. There were three elite throwers who didn’t have a single game winning drive over the past three seasons, they were Matt Ryan, Deshaun Watson, and Big Ben Roethlisberger.</p>
+<pre class="r"><code>closers &lt;- elitethrowers %&gt;% 
+  filter(GameWinningDrives &gt;= 1)</code></pre>
+<p>Once I had my data set of closers I was ready to make my bar graph. I did this by using the geom_bar function and taking the data from the closers data set. For my aesthetics, I made my x axis players and reordered it by game winning drives, for the weight of the bars I used game winning drives, and I filled them with the color grey. I then did this again except I used data from the Cousins data set I had made earlier and changed the fill color from grey to Vikings purple. I then labeled the x and y axis, created a title, subtitle, and caption for the graphic. Added the minimal theme, and gave sizes to the labels.</p>
+<pre class="r"><code>ggplot() + geom_bar(data=closers, aes(x=reorder(Player, GameWinningDrives), weight=GameWinningDrives), fill = &quot;grey&quot;) +
+  geom_bar(data=Cousins, aes(x=reorder(Player, GameWinningDrives), weight=GameWinningDrives), fill = &quot;#4F2683&quot;) +
+  labs(x=&quot;Player&quot;, y=&quot;Game Winning Drives&quot;, title=&quot;Not Clutch&quot;, subtitle=&quot;Cousins is last in game winning drives amongst the NFL&#39;s elite quarterbacks who have at least one.&quot;, caption=&quot;Source: Pro-Football-Reference | By Matt Walz&quot;) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 25, face = &quot;bold&quot;),
+    axis.title = element_text(size = 7),
+    axis.text = element_text(size = 6.3),
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )</code></pre>
+<p><img src="http://mattwalz.github.io/2021/04/25/is-kirk-cousins-an-elite-passer/index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>This is where the statistics start to show where Cousins game lacks. He is not great in the clutch, he only has 4 game winning drives to his name as a member of the Minnesota Vikings. That’s not to mention his equally unimpressive record of 7 wins and 16 losses in prime-time games. Football is a team sport but when the game is on the line and you absolutely need a score, Cousins is not your guy.</p>
+<p>After looking through all of the passing stats I would consider Cousins to be an elite passer since he has joined the Vikings. What he can do in the passing game is ultimately undone a lot of the time by how poor he performs during crunch time. That is where his game needs improvement. If he can find a new mentality at the end of games and can push the Vikings to win close ones that may be the difference between a legendary career and one that many people will forget five years after he retires.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
